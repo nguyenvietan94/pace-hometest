@@ -183,7 +183,7 @@ func insertMerchant(Merchant models.Merchant) int64 {
 }
 
 // get one Merchant from the DB by its Merchantid
-func getMerchant(id int64) (models.Merchant, error) {
+func getMerchant(id int64) (*models.Merchant, error) {
 	// create the postgres db connection
 	db := DbConnect()
 
@@ -191,7 +191,8 @@ func getMerchant(id int64) (models.Merchant, error) {
 	defer db.Close()
 
 	// create a Merchant of models.Merchant type
-	var Merchant models.Merchant
+	// var Merchant models.Merchant
+	merchant := new(models.Merchant)
 
 	// create the select sql query
 	sqlStatement := `SELECT * FROM merchants WHERE merchantID=$1`
@@ -200,20 +201,20 @@ func getMerchant(id int64) (models.Merchant, error) {
 	row := db.QueryRow(sqlStatement, id)
 
 	// unmarshal the row object to Merchant
-	err := row.Scan(&Merchant.MerchantID, &Merchant.Name, &Merchant.Age, &Merchant.Location)
+	err := row.Scan(&merchant.MerchantID, &merchant.Name, &merchant.Age, &merchant.Location)
 
 	switch err {
 	case sql.ErrNoRows:
 		fmt.Println("No rows were returned!")
-		return Merchant, nil
+		return merchant, nil
 	case nil:
-		return Merchant, nil
+		return merchant, nil
 	default:
 		log.Fatalf("Unable to scan the row. %v", err)
 	}
 
 	// return empty Merchant on error
-	return Merchant, err
+	return merchant, err
 }
 
 // get one Merchant from the DB by its Merchantid
