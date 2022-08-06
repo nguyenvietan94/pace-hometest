@@ -21,20 +21,20 @@ func DbConnect() *sql.DB {
 	}
 
 	if dbInstance == nil {
-		dbInstance, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
+		db, err := sql.Open("postgres", os.Getenv("POSTGRES_URL"))
 		if err != nil {
 			panic(err)
 		}
 
-		err = dbInstance.Ping()
+		err = db.Ping()
 		if err != nil {
 			panic(err)
 		}
-
+		dbInstance = db
+		if dbInstance == nil {
+			fmt.Println("dbInstance == nil")
+		}
 		fmt.Println("Successfully connected!")
-	}
-	if dbInstance == nil {
-		fmt.Println("dbInstance == nil")
 	}
 	return dbInstance
 }

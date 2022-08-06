@@ -12,7 +12,6 @@ func Router() *mux.Router {
 	// CRUD for a merchant account
 	router.HandleFunc("/api/newuser", middleware.CreateMerchant).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/user/{id}", middleware.GetMerchant).Methods("GET", "OPTIONS")
-	router.HandleFunc("/api/user", middleware.GetAllMerchants).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/user/{id}", middleware.UpdateMerchant).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/api/deleteuser/{id}", middleware.DeleteMerchant).Methods("DELETE", "OPTIONS")
 
