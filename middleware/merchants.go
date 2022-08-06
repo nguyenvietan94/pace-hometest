@@ -54,7 +54,6 @@ func GetMerchant(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		fmt.Printf("Unable to get merchant. %v\n", err)
-		return
 	}
 
 	json.NewEncoder(w).Encode(merchant)
@@ -81,6 +80,7 @@ func UpdateMerchant(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		msg = "Unable to update."
 	}
+	fmt.Printf("merchantID=%v, %v\n", id, msg)
 
 	res := response{
 		ID:      int64(id),
@@ -93,20 +93,21 @@ func UpdateMerchant(w http.ResponseWriter, r *http.Request) {
 func DeleteMerchant(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
-	id, err := strconv.Atoi(params["id"])
+	merchantID, err := strconv.Atoi(params["id"])
 	if err != nil {
 		fmt.Printf("Unable to convert the string into int.  %v\n", err)
 		return
 	}
 
-	msg := "Deleted successfully."
-	err = deleteMerchant(int64(id))
+	msg := "Deleted a merchant successfully."
+	err = deleteMerchant(int64(merchantID))
 	if err != nil {
-		msg = "Unable to delete."
+		msg = "Unable to delete a merchant."
 	}
+	fmt.Printf("merchantID %v, %v\n", merchantID, msg)
 
 	res := response{
-		ID:      int64(id),
+		ID:      int64(merchantID),
 		Message: msg,
 	}
 

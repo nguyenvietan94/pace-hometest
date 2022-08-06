@@ -15,5 +15,5 @@ CREATE TABLE members (
     email VARCHAR(320),
     merchantID INT,
     PRIMARY KEY (memberID),
-    FOREIGN KEY (merchantID) REFERENCES merchants(merchantID)
+    FOREIGN KEY (merchantID) REFERENCES merchants(merchantID) ON UPDATE CASCADE ON DELETE CASCADE
 );

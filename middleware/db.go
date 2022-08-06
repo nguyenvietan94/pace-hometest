@@ -31,10 +31,7 @@ func DbConnect() *sql.DB {
 			panic(err)
 		}
 		dbInstance = db
-		if dbInstance == nil {
-			fmt.Println("dbInstance == nil")
-		}
-		fmt.Println("Successfully connected!")
+		fmt.Println("Successfully connected to database!")
 	}
 	return dbInstance
 }

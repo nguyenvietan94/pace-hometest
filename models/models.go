@@ -11,5 +11,5 @@ type Member struct {
 	MemberID   int64  `json:"memberID"`
 	Name       string `json:"name"`
 	Email      string `json:"email"`
-	MerchantId int64  `json:"merchantID"`
+	MerchantID int64  `json:"merchantID"`
 }

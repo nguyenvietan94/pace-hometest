@@ -9,8 +9,12 @@ import (
 )
 
 func main() {
-	_ = middleware.DbConnect()
+
+	db := middleware.DbConnect()
+	defer db.Close()
+
 	r := router.Router()
 	fmt.Println("Started server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
+
 }
