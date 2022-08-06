@@ -68,7 +68,7 @@ func UpdateMember(w http.ResponseWriter, r *http.Request) {
 	}
 
 	res := response{
-		ID:      int64(member.Id),
+		ID:      int64(member.MemberID),
 		Message: msg,
 	}
 
@@ -131,7 +131,7 @@ func getMember(memberId int64) (*models.Member, error) {
 	row := db.QueryRow(sqlStatement, memberId)
 
 	var member models.Member
-	err := row.Scan(&member.Id, &member.MerchantId, &member.Name, &member.Email)
+	err := row.Scan(&member.MemberID, &member.MerchantId, &member.Name, &member.Email)
 	if err != nil {
 		log.Fatalf("Unable to scan the row. %v", err)
 		return nil, err

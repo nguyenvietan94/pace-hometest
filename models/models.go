@@ -1,15 +1,15 @@
 package models
 
 type Merchant struct {
-	Id       int64  `json:"id"`
-	Name     string `json:"name"`
-	Location string `json:"location"`
-	Age      int64  `json:"age"`
+	MerchantID int64  `json:"merchantID"`
+	Name       string `json:"name"`
+	Age        int64  `json:"age"`
+	Location   string `json:"location"`
 }
 
 type Member struct {
-	Id         int64  `json:"id"`
-	MerchantId int64  `json:"merchantId"`
+	MemberID   int64  `json:"memberID"`
 	Name       string `json:"name"`
 	Email      string `json:"email"`
+	MerchantId int64  `json:"merchantID"`
 }

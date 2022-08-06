@@ -2,28 +2,23 @@ package middleware
 
 import (
 	"database/sql"
-	"encoding/json" // package to encode and decode the json into struct and vice versa
+	"encoding/json"
 	"fmt"
 	"log"
-	"net/http" // used to access the request and response object of the api
+	"net/http"
 
-	// used to read the environment variable
-	"pace-hometest/models" // models package where Merchant schema is defined
-	"strconv"              // package used to covert string into int type
+	"pace-hometest/models"
+	"strconv"
 
-	"github.com/gorilla/mux" // used to get the params from the route
-
-	// package used to read the .env file
+	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 )
 
-// response format
 type response struct {
 	ID      int64  `json:"id,omitempty"`
 	Message string `json:"message,omitempty"`
 }
 
-// CreateMerchant create a Merchant in the postgres db
 func CreateMerchant(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: lowercase
@@ -51,7 +46,6 @@ func CreateMerchant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// GetMerchant will return a single Merchant by its id
 func GetMerchant(w http.ResponseWriter, r *http.Request) {
 	// get the Merchantid from the request params, key is "id"
 	params := mux.Vars(r)
@@ -88,7 +82,6 @@ func GetAllMerchants(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Merchants)
 }
 
-// UpdateMerchant update Merchant's detail in the postgres db
 func UpdateMerchant(w http.ResponseWriter, r *http.Request) {
 
 	// get the Merchantid from the request params, key is "id"
@@ -127,7 +120,6 @@ func UpdateMerchant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// DeleteMerchant delete Merchant's detail in the postgres db
 func DeleteMerchant(w http.ResponseWriter, r *http.Request) {
 
 	// get the Merchantid from the request params, key is "id"
@@ -171,7 +163,7 @@ func insertMerchant(Merchant models.Merchant) int64 {
 
 	// create the insert sql query
 	// returning Merchantid will return the id of the inserted Merchant
-	sqlStatement := `INSERT INTO Merchants (name, location, age) VALUES ($1, $2, $3) RETURNING id` // TODO: create table again
+	sqlStatement := `INSERT INTO merchants (name, age, location) VALUES ($1, $2, $3) RETURNING merchantID` // TODO: create table again
 
 	// the inserted id will store in this id
 	var id int64
@@ -202,13 +194,13 @@ func getMerchant(id int64) (models.Merchant, error) {
 	var Merchant models.Merchant
 
 	// create the select sql query
-	sqlStatement := `SELECT * FROM Merchants WHERE Merchantid=$1`
+	sqlStatement := `SELECT * FROM merchants WHERE merchantID=$1`
 
 	// execute the sql statement
 	row := db.QueryRow(sqlStatement, id)
 
 	// unmarshal the row object to Merchant
-	err := row.Scan(&Merchant.Id, &Merchant.Name, &Merchant.Age, &Merchant.Location)
+	err := row.Scan(&Merchant.MerchantID, &Merchant.Name, &Merchant.Age, &Merchant.Location)
 
 	switch err {
 	case sql.ErrNoRows:
@@ -235,7 +227,7 @@ func getAllMerchants() ([]models.Merchant, error) {
 	var Merchants []models.Merchant
 
 	// create the select sql query
-	sqlStatement := `SELECT * FROM Merchants`
+	sqlStatement := `SELECT * FROM merchants`
 
 	// execute the sql statement
 	rows, err := db.Query(sqlStatement)
@@ -252,7 +244,7 @@ func getAllMerchants() ([]models.Merchant, error) {
 		var Merchant models.Merchant
 
 		// unmarshal the row object to Merchant
-		err = rows.Scan(&Merchant.Id, &Merchant.Name, &Merchant.Age, &Merchant.Location)
+		err = rows.Scan(&Merchant.MerchantID, &Merchant.Name, &Merchant.Age, &Merchant.Location)
 
 		if err != nil {
 			log.Fatalf("Unable to scan the row. %v", err)
@@ -277,7 +269,7 @@ func updateMerchant(id int64, Merchant models.Merchant) int64 {
 	defer db.Close()
 
 	// create the update sql query
-	sqlStatement := `UPDATE Merchants SET name=$2, location=$3, age=$4 WHERE Merchantid=$1`
+	sqlStatement := `UPDATE merchants SET name=$2, location=$3, age=$4 WHERE merchantID=$1`
 
 	// execute the sql statement
 	res, err := db.Exec(sqlStatement, id, Merchant.Name, Merchant.Location, Merchant.Age)
@@ -308,7 +300,7 @@ func deleteMerchant(id int64) int64 {
 	defer db.Close()
 
 	// create the delete sql query
-	sqlStatement := `DELETE FROM Merchants WHERE Merchantid=$1`
+	sqlStatement := `DELETE FROM merchants WHERE merchantID=$1`
 
 	// execute the sql statement
 	res, err := db.Exec(sqlStatement, id)
@@ -328,5 +320,3 @@ func deleteMerchant(id int64) int64 {
 
 	return rowsAffected
 }
-
-// -- CRUD for a new team member on a merchant account
