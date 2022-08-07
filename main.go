@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"pace-hometest/middleware"
@@ -9,12 +8,9 @@ import (
 )
 
 func main() {
-
 	db := middleware.DbConnect()
 	defer db.Close()
-
 	r := router.Router()
-	fmt.Println("Started server on port 8080")
+	log.Println("Started server on port 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
-
 }

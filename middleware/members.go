@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"pace-hometest/models"
 	"strconv"
@@ -16,22 +17,20 @@ func CreateMember(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&member)
 	if err != nil {
-		fmt.Printf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
 		return
 	}
 
 	msg := "Member created sucessfully."
-	memberID := insertMember(&member)
-	if memberID < 0 {
+	memberID, err := insertMember(&member)
+	if err != nil {
 		msg = "Unable to create a new member."
 	}
 
-	res := response{
-		ID:      memberID,
-		Message: msg,
-	}
+	log.Printf("%v. memberID=%v", msg, memberID)
 
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(response{ID: memberID, Message: msg})
 }
 
 func GetMember(w http.ResponseWriter, r *http.Request) {
@@ -39,13 +38,17 @@ func GetMember(w http.ResponseWriter, r *http.Request) {
 
 	memberID, err := strconv.Atoi(params["memberid"])
 	if err != nil {
-		fmt.Printf("Unable to convert the string into int.  %v\n", err)
+		log.Printf("Unable to convert the string into int.  %v", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
+		return
 	}
 
 	member, err := getMember(int64(memberID))
 	if err != nil {
-		fmt.Printf("Unable to get a member. %v\n", err)
+		log.Printf("Unable to get member, ID=%v. %v", memberID, err)
 	}
+
+	log.Printf("Get member: memberID=%v, name=%v, email=%v, merchantID=%v", memberID, member.Name, member.Email, member.MerchantID)
 
 	json.NewEncoder(w).Encode(member)
 }
@@ -55,13 +58,17 @@ func UpdateMember(w http.ResponseWriter, r *http.Request) {
 
 	memberID, err := strconv.Atoi(params["memberid"])
 	if err != nil {
-		fmt.Printf("Unable to convert the string into int.  %v\n", err)
+		log.Printf("Unable to convert the string into int.  %v", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
+		return
 	}
 
 	var member models.Member
 	err = json.NewDecoder(r.Body).Decode(&member)
 	if err != nil {
-		fmt.Printf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
+		return
 	}
 
 	msg := "Member updated successfully."
@@ -70,12 +77,7 @@ func UpdateMember(w http.ResponseWriter, r *http.Request) {
 		msg = "Unable to update a member."
 	}
 
-	res := response{
-		ID:      int64(memberID),
-		Message: msg,
-	}
-
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(response{ID: int64(memberID), Message: msg})
 }
 
 func DeleteMember(w http.ResponseWriter, r *http.Request) {
@@ -105,11 +107,11 @@ func DeleteMember(w http.ResponseWriter, r *http.Request) {
 //-- private methods ---
 
 // TODO: return error, not return integer
-func insertMember(member *models.Member) int64 {
+func insertMember(member *models.Member) (int64, error) {
 	// check if email exists
 	exist, err := checkIfEmailExists(member.Email)
 	if err == nil && exist {
-		return -1
+		return -1, errors.New("email already exists")
 	}
 
 	// insert a new member to db
@@ -120,13 +122,13 @@ func insertMember(member *models.Member) int64 {
 	var memberID int64
 	err = db.QueryRow(sqlStatement, member.Name, member.Email, member.MerchantID).Scan(&memberID)
 	if err != nil {
-		fmt.Printf("Unable to execute the query. %v\n", err)
-		return -1
+		log.Printf("Unable to execute the query. %v\n", err)
+		return -1, err
 	}
 
-	fmt.Printf("MerchantID %d: Inserted a new team member with memberID %d\n", member.MerchantID, memberID)
+	log.Printf("MerchantID %d: Inserted a new team member with memberID %d\n", member.MerchantID, memberID)
 
-	return memberID
+	return memberID, nil
 }
 
 func getMember(memberID int64) (*models.Member, error) {
@@ -138,7 +140,7 @@ func getMember(memberID int64) (*models.Member, error) {
 	var member models.Member
 	err := row.Scan(&member.MemberID, &member.Name, &member.Email, &member.MerchantID)
 	if err != nil {
-		fmt.Printf("Unable to scan the row. %v\n", err)
+		log.Printf("Unable to scan the row. %v", err)
 		return nil, err
 	}
 

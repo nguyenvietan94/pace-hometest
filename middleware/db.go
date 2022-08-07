@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 	"os"
 
@@ -11,11 +10,8 @@ import (
 
 var dbInstance *sql.DB
 
-// create connection with postgres db
 func DbConnect() *sql.DB {
-	// load .env file
 	err := godotenv.Load(".env")
-
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
@@ -25,13 +21,14 @@ func DbConnect() *sql.DB {
 		if err != nil {
 			panic(err)
 		}
-
 		err = db.Ping()
 		if err != nil {
 			panic(err)
 		}
 		dbInstance = db
-		fmt.Println("Successfully connected to database!")
 	}
+
+	log.Println("Successfully connected to database!")
+
 	return dbInstance
 }
