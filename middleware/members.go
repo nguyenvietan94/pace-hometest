@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// TODO: check email if exists
 func CreateMember(w http.ResponseWriter, r *http.Request) {
 	var member models.Member
 
@@ -49,6 +50,7 @@ func GetMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(member)
 }
 
+// TODO: check email if exists
 func UpdateMember(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
