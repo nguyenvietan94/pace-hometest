@@ -17,3 +17,5 @@ CREATE TABLE members (
     PRIMARY KEY (memberID),
     FOREIGN KEY (merchantID) REFERENCES merchants(merchantID) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+CREATE INDEX email_idx ON members(email);
