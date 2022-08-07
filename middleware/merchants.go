@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -18,6 +19,7 @@ type response struct {
 }
 
 func CreateMerchant(w http.ResponseWriter, r *http.Request) {
+	r.URL.Query().Get("id")
 	var merchant models.Merchant
 
 	err := json.NewDecoder(r.Body).Decode(&merchant)
@@ -114,6 +116,35 @@ func DeleteMerchant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+// implement pagination
+func GetMembersWithPagination(w http.ResponseWriter, r *http.Request) {
+	// get merchantID
+	params := mux.Vars(r)
+
+	merchantID, err := strconv.Atoi(params["id"])
+	if err != nil {
+		fmt.Printf("Unable to convert the string into int.  %v\n", err)
+	}
+
+	// get page id and page size
+	pageID, err := strconv.Atoi(r.URL.Query().Get("pageid"))
+	if err != nil {
+		pageID = 0
+	}
+	pageSize, err := strconv.Atoi(r.URL.Query().Get("pagesize"))
+	if err != nil {
+		pageSize = 10
+	}
+
+	members, err := getMembersWithPagination(int64(merchantID), pageID, pageSize)
+	if err != nil {
+		fmt.Printf("Unable to get members, merchantID=%v. %v\n", merchantID, err)
+		// TODO: return error
+	}
+
+	json.NewEncoder(w).Encode(members)
+}
+
 //------------------------- handler functions ----------------
 
 func insertMerchant(merchant *models.Merchant) int64 {
@@ -171,4 +202,39 @@ func deleteMerchant(id int64) error {
 	}
 
 	return err
+}
+
+// pageID >= 1
+func getMembersWithPagination(merchantID int64, pageID, pageSize int) ([]models.Member, error) {
+	if pageID <= 0 {
+		return nil, errors.New("pageID must be greater than 0")
+	}
+
+	db := DbConnect()
+
+	limit := pageID * pageSize
+	start := (pageID - 1) * pageSize
+
+	sqlStatement := `SELECT * FROM members WHERE merchantID=$1 LIMIT $2`
+	rows, err := db.Query(sqlStatement, merchantID, limit)
+	if err != nil {
+		fmt.Printf("Unable to execute the query. %v\n", err)
+		return nil, err
+	}
+
+	var members []models.Member
+	cnt := 0
+	for rows.Next() {
+		if cnt >= start {
+			var mem models.Member
+			err = rows.Scan(&mem.MemberID, &mem.Name, &mem.Email, &mem.MerchantID)
+			if err != nil {
+				fmt.Printf("Unable to scan the row. %v\n", err)
+			}
+			members = append(members, mem)
+		}
+		cnt++
+	}
+
+	return members, nil
 }

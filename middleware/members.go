@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// TODO: check email if exists
 func CreateMember(w http.ResponseWriter, r *http.Request) {
 	var member models.Member
 
@@ -51,7 +50,6 @@ func GetMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(member)
 }
 
-// TODO: check email if exists
 func UpdateMember(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -86,6 +84,7 @@ func DeleteMember(w http.ResponseWriter, r *http.Request) {
 	memberID, err := strconv.Atoi(params["memberid"])
 	if err != nil {
 		fmt.Printf("Unable to convert the string into int.  %v\n", err)
+		// TODO: error should return empty message?
 	}
 
 	msg := "Deleted a member successfully."
@@ -103,14 +102,9 @@ func DeleteMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-// TODO: implement pagination
-func GetAllMembers(w http.ResponseWriter, r *http.Request) {
-
-}
-
 //-- private methods ---
 
-// TODO: return error
+// TODO: return error, not return integer
 func insertMember(member *models.Member) int64 {
 	// check if email exists
 	exist, err := checkIfEmailExists(member.Email)
@@ -138,11 +132,11 @@ func insertMember(member *models.Member) int64 {
 func getMember(memberID int64) (*models.Member, error) {
 	db := DbConnect()
 
-	sqlStatement := `SELECT * FROM members WHERE id=$1`
+	sqlStatement := `SELECT * FROM members WHERE memberID=$1`
 	row := db.QueryRow(sqlStatement, memberID)
 
 	var member models.Member
-	err := row.Scan(&member.MemberID, &member.MerchantID, &member.Name, &member.Email)
+	err := row.Scan(&member.MemberID, &member.Name, &member.Email, &member.MerchantID)
 	if err != nil {
 		fmt.Printf("Unable to scan the row. %v\n", err)
 		return nil, err
