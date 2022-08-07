@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"pace-hometest/models"
@@ -109,13 +110,21 @@ func GetAllMembers(w http.ResponseWriter, r *http.Request) {
 
 //-- private methods ---
 
+// TODO: return error
 func insertMember(member *models.Member) int64 {
+	// check if email exists
+	exist, err := checkIfEmailExists(member.Email)
+	if err == nil && exist {
+		return -1
+	}
+
+	// insert a new member to db
 	db := DbConnect()
 
 	sqlStatement := `INSERT INTO members (name, email, merchantID) VALUES ($1, $2, $3) RETURNING memberID`
 
 	var memberID int64
-	err := db.QueryRow(sqlStatement, member.Name, member.Email, member.MerchantID).Scan(&memberID)
+	err = db.QueryRow(sqlStatement, member.Name, member.Email, member.MerchantID).Scan(&memberID)
 	if err != nil {
 		fmt.Printf("Unable to execute the query. %v\n", err)
 		return -1
@@ -143,11 +152,18 @@ func getMember(memberID int64) (*models.Member, error) {
 }
 
 func updateMember(memberID int64, member *models.Member) error {
+	// check if email exists
+	exist, err := checkIfEmailExists(member.Email)
+	if err == nil && exist {
+		return errors.New("email already exists")
+	}
+
+	// update data on db
 	db := DbConnect()
 
 	sqlStatement := `UPDATE members SET name=$2, email=$3, merchantID=$4 WHERE memberID=$1`
 
-	_, err := db.Exec(sqlStatement, memberID, member.Name, member.Email, member.MerchantID)
+	_, err = db.Exec(sqlStatement, memberID, member.Name, member.Email, member.MerchantID)
 	if err != nil {
 		fmt.Printf("Unable to execute the query. %v\n", err)
 	}
@@ -166,4 +182,27 @@ func deleteMember(memberID int64) error {
 	}
 
 	return err
+}
+
+func checkIfEmailExists(email string) (bool, error) {
+	if email == "" {
+		return false, errors.New("emails must be non-empty")
+	}
+
+	db := DbConnect()
+
+	// check if email exists
+	sqlStatement := `SELECT email FROM members WHERE email=$1`
+
+	rows, err := db.Query(sqlStatement, email)
+	if err != nil {
+		return false, err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return true, nil
+	}
+
+	return false, nil
 }
