@@ -58,7 +58,7 @@ func GetMerchant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Get merchant: merchantID=%v, name=%v, email=%v, merchantID=%v", merchantID, merchant.Name, merchant.Age, merchant.Location)
+	log.Printf("Get merchant: merchantID=%v, name=%v, age=%v, merchantID=%v", merchantID, merchant.Name, merchant.Age, merchant.Location)
 
 	json.NewEncoder(w).Encode(merchant)
 }

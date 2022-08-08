@@ -111,7 +111,7 @@ func DeleteMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response{ID: int64(memberID), Message: msg})
 }
 
-//-- private methods ---
+//-- private methods
 
 func insertMember(member *models.Member) (int64, error) {
 	// check if email exists
