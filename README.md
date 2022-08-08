@@ -69,8 +69,10 @@ members (
     PRIMARY KEY (memberID),
     FOREIGN KEY (merchantID) REFERENCES merchants(merchantID) ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+CREATE INDEX email_idx ON members(email);
 ```
-The cascade policy is defined as a foreign-key constrain between the two tables. Any update/delete on one table will affect the other.
+The cascade policy is defined as a foreign-key constrain between the two tables. Any update/delete on one table will affect the other. Furthermore, since it is required to check if an email exists when creating/updating members, an index on email should be created to speed up the lookup.
 
 ## Installation <a name="installation"></a>
 
