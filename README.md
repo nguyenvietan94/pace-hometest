@@ -10,8 +10,11 @@ Create backend APIs that manage merchant accounts.
 4. Get list should implement pagination.
 
 ## System Design
-[diagram]
-
+```
+						   /-----------> merchant_services_(CRUD)-----\	
+	  user --------> router											---> Database
+						   \-----------> member_services_(CRUD)-------/
+```
 ### APIs
 The HTTP server employs the ```gorilla/mux``` package to create a request router. Here are the list of handler methods supported by the server:
 ```
