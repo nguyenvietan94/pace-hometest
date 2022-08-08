@@ -57,7 +57,7 @@ func GetMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(member)
 }
 
-// TODO: check if member exists first; if that, check if email is duplicate to others
+// check if member exists first; if that, check if email is duplicate to others
 func UpdateMember(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -154,12 +154,6 @@ func getMember(memberID int64) (*models.Member, error) {
 }
 
 func updateMember(memberID int64, member *models.Member) error {
-	// check if the memberID exists first
-	memberIdExist, err := checkifMemberIdExist(memberID)
-	if err == nil && !memberIdExist {
-		return errors.New("memberID does not exist")
-	}
-
 	// check if the updated email is duplicate to others
 	emailExist, err := checkIfEmailExists(memberID, member.Email)
 	if err == nil && emailExist {
@@ -203,24 +197,6 @@ func checkIfEmailExists(memberID int64, email string) (bool, error) {
 	sqlStatement := `SELECT email FROM members WHERE email=$1 AND memberID<>$2`
 
 	rows, err := db.Query(sqlStatement, email, memberID)
-	if err != nil {
-		return false, err
-	}
-	defer rows.Close()
-
-	if rows.Next() {
-		return true, nil
-	}
-
-	return false, nil
-}
-
-func checkifMemberIdExist(memberID int64) (bool, error) {
-	db := DbConnect()
-
-	sqlStatement := `SELECT memberID FROM members WHERE memberID=$1`
-
-	rows, err := db.Query(sqlStatement, memberID)
 	if err != nil {
 		return false, err
 	}
