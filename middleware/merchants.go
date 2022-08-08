@@ -13,11 +13,13 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// response contains data sent to clients as a response in .json format
 type response struct {
 	ID      int64  `json:"id,omitempty"`
 	Message string `json:"message,omitempty"`
 }
 
+// creates a new merchant and store in database
 func CreateMerchant(w http.ResponseWriter, r *http.Request) {
 	var merchant models.Merchant
 
@@ -39,6 +41,7 @@ func CreateMerchant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response{ID: merchantID, Message: msg})
 }
 
+// gets merchant info
 func GetMerchant(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -63,6 +66,7 @@ func GetMerchant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(merchant)
 }
 
+// updates merchant
 func UpdateMerchant(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -92,6 +96,7 @@ func UpdateMerchant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response{ID: int64(merchantID), Message: msg})
 }
 
+// deletes merchant by merchant id
 func DeleteMerchant(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -113,7 +118,8 @@ func DeleteMerchant(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response{ID: int64(merchantID), Message: msg})
 }
 
-// implement pagination
+// returns a list of members of a merchant with pagination.
+// request URL should contains merchantID, pageID, and pageSize
 func GetMembersWithPagination(w http.ResponseWriter, r *http.Request) {
 	// get merchantID
 	params := mux.Vars(r)
@@ -147,6 +153,7 @@ func GetMembersWithPagination(w http.ResponseWriter, r *http.Request) {
 
 //-- private methods
 
+// connects to database and executes a query that inserts a merchant
 func insertMerchant(merchant *models.Merchant) (int64, error) {
 	db := DbConnect()
 
@@ -162,6 +169,7 @@ func insertMerchant(merchant *models.Merchant) (int64, error) {
 	return memberID, nil
 }
 
+// connects to database and executes a query that selects a merchant by id
 func getMerchant(id int64) (*models.Merchant, error) {
 	db := DbConnect()
 
@@ -178,6 +186,7 @@ func getMerchant(id int64) (*models.Merchant, error) {
 	return &merchant, err
 }
 
+// connects to database and executes a query that updates a merchant
 func updateMerchant(id int64, merchant *models.Merchant) error {
 	db := DbConnect()
 
@@ -190,6 +199,7 @@ func updateMerchant(id int64, merchant *models.Merchant) error {
 	return err
 }
 
+// connects to database and executes a query that deletes a merchant
 func deleteMerchant(id int64) error {
 	db := DbConnect()
 
@@ -202,7 +212,8 @@ func deleteMerchant(id int64) error {
 	return err
 }
 
-// pageID >= 1
+// connects to database, executes a select query, and returns a page of members of a merchant with merchantID.
+// the page is specified by pageID and pageSize. pageID must be greater than 0.
 func getMembersWithPagination(merchantID int64, pageID, pageSize int) ([]models.Member, error) {
 	if pageID <= 0 {
 		return nil, errors.New("pageID must be greater than 0")

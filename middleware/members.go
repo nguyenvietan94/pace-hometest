@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// creates a new team member of a merchant
 func CreateMember(w http.ResponseWriter, r *http.Request) {
 	var member models.Member
 
@@ -35,6 +36,7 @@ func CreateMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response{ID: memberID, Message: "Member created successfully."})
 }
 
+// gets the member info
 func GetMember(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -57,7 +59,7 @@ func GetMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(member)
 }
 
-// check if member exists first; if that, check if email is duplicate to others
+// updates member info. the email is checked to avoid being duplicate to other members
 func UpdateMember(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -90,6 +92,7 @@ func UpdateMember(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response{ID: int64(memberID), Message: msg})
 }
 
+// deletes a member by memberID
 func DeleteMember(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
@@ -113,6 +116,7 @@ func DeleteMember(w http.ResponseWriter, r *http.Request) {
 
 //-- private methods
 
+// connects to database, executes a query that inserts a new member. email is checked to avoid being duplicate beforhand
 func insertMember(member *models.Member) (int64, error) {
 	// check if email exists
 	exist, err := checkIfEmailExists(-1, member.Email)
@@ -137,6 +141,7 @@ func insertMember(member *models.Member) (int64, error) {
 	return memberID, nil
 }
 
+// connects to database, executes a select query to get member info by memberID
 func getMember(memberID int64) (*models.Member, error) {
 	db := DbConnect()
 
@@ -153,6 +158,7 @@ func getMember(memberID int64) (*models.Member, error) {
 	return &member, nil
 }
 
+// connects to database, executes an update query on a member. email is checked to avoid being duplicate beforehand
 func updateMember(memberID int64, member *models.Member) error {
 	// check if the updated email is duplicate to others
 	emailExist, err := checkIfEmailExists(memberID, member.Email)
@@ -173,6 +179,7 @@ func updateMember(memberID int64, member *models.Member) error {
 	return err
 }
 
+// connects to database, executes a delete query to delete a member by memberID
 func deleteMember(memberID int64) error {
 	db := DbConnect()
 
@@ -186,6 +193,7 @@ func deleteMember(memberID int64) error {
 	return err
 }
 
+// check if an email exists in members table. returns true with no error if it does, and false otherwise
 func checkIfEmailExists(memberID int64, email string) (bool, error) {
 	if email == "" {
 		return false, errors.New("emails must be non-empty")

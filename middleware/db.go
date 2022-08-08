@@ -10,6 +10,8 @@ import (
 
 var dbInstance *sql.DB
 
+// loads config file and connects to database;
+// employs Singleton design pattern to create only one instance of connection for multiple requests
 func DbConnect() *sql.DB {
 	err := godotenv.Load(".env")
 	if err != nil {
