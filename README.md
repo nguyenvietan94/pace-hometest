@@ -9,13 +9,27 @@ Create backend APIs that manage merchant accounts.
 3. Get the list of team members per merchant.
 4. Get list should implement pagination.
 
-## System Design
+## Table of contents
+1. [System Design](#systemdesign)
+    1. [APIs](#apis)
+    2. [Data models](#datamodels)
+2. [Installation](#installation)
+    1. [Prerequisites](#prerequisites)
+    2. [Clone pace-hometest project from github](#clone)
+    3. [Create databases and tables with PostgreSQL](#createdb)
+3. [Run and Test](#runandtest)
+    1. [Run HTTP server](#runserver)
+    2. [CRUD on merchant accounts](#crudmerchants)
+    3. [CRUD on team members of a merchant account](#crudmembers)
+    4. [Note: The Cascade Policy](#cascade)
+
+## System Design <a name="systemdesign"></a>
 ```
-						   /-----------> merchant_services_(CRUD)-----\	
-	  user --------> router											---> Database
-						   \-----------> member_services_(CRUD)-------/
+			       /-----------> merchant_services_(CRUD)-----\	
+	  user --------> router						   ---> Database
+			       \-----------> member_services_(CRUD)-------/
 ```
-### APIs
+### APIs <a name="apis"></a>
 The HTTP server employs the ```gorilla/mux``` package to create a request router. Here are the list of handler methods supported by the server:
 ```
 	router := mux.NewRouter()
@@ -37,7 +51,7 @@ The statements above clearly define CRUD methods for merchant accounts and their
 ```
 curl -X GET "http://localhost:8080/api/merchant/1/allmembers?pageid=1&pagesize=10"
 ```
-### Data models
+### Data models <a name="datamodels"></a>
 Two tables including ```merchants``` and ```members``` are created as follows:
 ```
 merchants (
@@ -58,13 +72,13 @@ members (
 ```
 The cascade policy is defined as a foreign-key constrain between the two tables. Any update/delete on one table will affect the other.
 
-## Installation
+## Installation <a name="installation"></a>
 
-### Prerequisites
+### Prerequisites <a name="prerequisites"></a>
 - Go version 1.16 or later. Please follow this [guide](https://go.dev/doc/install) for the Go installation.
 - PostgreSQL with the latest version. Please follow [postgresql.org](https://www.postgresql.org/download) or [digitalocean](https://www.digitalocean.com/community/tutorials/how-to-install-postgresql-on-ubuntu-22-04-quickstart) for the installation guide.
 
-### Clone ```pace-hometest``` project from github
+### Clone ```pace-hometest``` project from github <a name="clone"></a>
 Assume after the installation, ```~go/src``` repo contains projects of Go souce code. Let's clone the ```pace-hometest``` project into it.
 ```
 $ cd ~/go/src
@@ -76,7 +90,7 @@ Move into this project repo and download all the required packages:
 ~/go/src/pace-hometest$ go get ./...
 ```
 
-### Create databases and tables with PostgreSQL
+### Create databases and tables with PostgreSQL <a name="createdb"></a>
 Switch to ```postgres``` user:
 ```
 $ sudo -u postgres -i
@@ -124,13 +138,13 @@ Take a look at the configuration file ```.env``` for database connection in Go c
 ```
 POSTGRES_URL="host=localhost user=postgres password=postgres dbname=hometest sslmode=disable"
 ```
-## Run and Test
+## Run and Test <a name="runandtest"></a>
 
 As the PostgreSQL database connection is required, it is more convenient to test the program by sending HTTP requests via tools (eg. [Restman](https://chrome.google.com/webstore/detail/restman/ihgpcfpkpmdcghlnaofdmjkoemnlijdi?hl=en) or [cURL](https://curl.se/)), instead of writing unit tests.
 
 These tests are run on a local host.
 
-### Run HTTP server
+### Run HTTP server <a name="runserver"></a>
 Let's run the Go code:
 ```
 ~/go/src/pace-hometest$ go run main.go
@@ -149,7 +163,7 @@ and the password must be correcly declared in the ```.env``` file:
 POSTGRES_URL="host=localhost user=postgres password=postgres dbname=hometest sslmode=disable"
 ```
 
-### CRUD on merchant accounts
+### CRUD on merchant accounts <a name="crudmerchants"></a>
 HTTP requests will be sent from a seperate terminal to the server by ```cURL``` command.
 
 #### Create
@@ -206,7 +220,7 @@ Logs showing on the server terminal:
 2022/08/08 17:01:13 Unable to get merchant. sql: no rows in result set
 ```
 
-### CRUD on team members of a merchant account
+### CRUD on team members of a merchant account <a name="crudmembers"></a>
 HTTP requests will be sent from a seperate terminal to the server by cURL command.
 
 #### Create
@@ -297,7 +311,7 @@ Logs showing on the server terminal:
 2022/08/08 17:43:37 Unable to get member, memberID=3. sql: no rows in result set
 ```
 
-### Note: The Cascade Policy
+#### Note: The Cascade Policy <a name="cascade"></a>
 When creating ```merchants``` and ```members``` tables, the foreign-key constrant is declared as the cascade policy:
 ```
 CREATE TABLE members (
