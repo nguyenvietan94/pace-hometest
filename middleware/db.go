@@ -26,9 +26,8 @@ func DbConnect() *sql.DB {
 			panic(err)
 		}
 		dbInstance = db
+		log.Println("Successfully connected to database!")
 	}
-
-	log.Println("Successfully connected to database!")
 
 	return dbInstance
 }

@@ -3,7 +3,7 @@ package middleware
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"log"
 	"net/http"
 
 	"pace-hometest/models"
@@ -19,44 +19,46 @@ type response struct {
 }
 
 func CreateMerchant(w http.ResponseWriter, r *http.Request) {
-	r.URL.Query().Get("id")
 	var merchant models.Merchant
 
 	err := json.NewDecoder(r.Body).Decode(&merchant)
 	if err != nil {
-		fmt.Printf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
 		return
 	}
 
 	msg := "Merchant created successfully"
-	insertedID := insertMerchant(&merchant)
-	if insertedID < 0 {
+	merchantID, err := insertMerchant(&merchant)
+	if err != nil {
 		msg = "Unable to create a merchant."
 	}
 
-	res := response{
-		ID:      insertedID,
-		Message: msg,
-	}
+	log.Printf("Inserted a new merchant: id=%v, name=%v, age=%v, location=%v\n", merchantID, merchant.Name, merchant.Age, merchant.Location)
 
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(response{ID: merchantID, Message: msg})
 }
 
 func GetMerchant(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
-	id, err := strconv.Atoi(params["id"])
+	merchantID, err := strconv.Atoi(params["id"])
 
 	if err != nil {
-		fmt.Printf("Unable to convert the string into int.  %v\n", err)
+		log.Printf("Unable to convert the string into int.  %v\n", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
 		return
 	}
 
-	merchant, err := getMerchant(int64(id))
+	merchant, err := getMerchant(int64(merchantID))
 
 	if err != nil {
-		fmt.Printf("Unable to get merchant. %v\n", err)
+		log.Printf("Unable to get merchant. %v\n", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
+		return
 	}
+
+	log.Printf("Get merchant: merchantID=%v, name=%v, email=%v, merchantID=%v", merchantID, merchant.Name, merchant.Age, merchant.Location)
 
 	json.NewEncoder(w).Encode(merchant)
 }
@@ -64,32 +66,30 @@ func GetMerchant(w http.ResponseWriter, r *http.Request) {
 func UpdateMerchant(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 
-	id, err := strconv.Atoi(params["id"])
+	merchantID, err := strconv.Atoi(params["id"])
 	if err != nil {
-		fmt.Printf("Unable to convert the string into int.  %v", err)
+		log.Printf("Unable to convert the string into int.  %v", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
 		return
 	}
 
 	var merchant models.Merchant
 	err = json.NewDecoder(r.Body).Decode(&merchant)
 	if err != nil {
-		fmt.Printf("Unable to decode the request body.  %v", err)
+		log.Printf("Unable to decode the request body.  %v", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
 		return
 	}
 
 	msg := "Updated successfully"
-	err = updateMerchant(int64(id), &merchant)
+	err = updateMerchant(int64(merchantID), &merchant)
 	if err != nil {
 		msg = "Unable to update."
 	}
-	fmt.Printf("merchantID=%v, %v\n", id, msg)
 
-	res := response{
-		ID:      int64(id),
-		Message: msg,
-	}
+	log.Printf("merchantID=%v, %v", merchantID, msg)
 
-	json.NewEncoder(w).Encode(res)
+	json.NewEncoder(w).Encode(response{ID: int64(merchantID), Message: msg})
 }
 
 func DeleteMerchant(w http.ResponseWriter, r *http.Request) {
@@ -97,23 +97,20 @@ func DeleteMerchant(w http.ResponseWriter, r *http.Request) {
 
 	merchantID, err := strconv.Atoi(params["id"])
 	if err != nil {
-		fmt.Printf("Unable to convert the string into int.  %v\n", err)
+		log.Printf("Unable to convert the string into int.  %v", err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
 		return
 	}
 
-	msg := "Deleted a merchant successfully."
+	msg := "Deleted a merchant successfully"
 	err = deleteMerchant(int64(merchantID))
 	if err != nil {
-		msg = "Unable to delete a merchant."
-	}
-	fmt.Printf("merchantID %v, %v\n", merchantID, msg)
-
-	res := response{
-		ID:      int64(merchantID),
-		Message: msg,
+		msg = "Unable to delete a merchant"
 	}
 
-	json.NewEncoder(w).Encode(res)
+	log.Printf("%v, merchantID %v", msg, merchantID)
+
+	json.NewEncoder(w).Encode(response{ID: int64(merchantID), Message: msg})
 }
 
 // implement pagination
@@ -123,13 +120,13 @@ func GetMembersWithPagination(w http.ResponseWriter, r *http.Request) {
 
 	merchantID, err := strconv.Atoi(params["id"])
 	if err != nil {
-		fmt.Printf("Unable to convert the string into int.  %v\n", err)
+		log.Printf("Unable to convert the string into int.  %v\n", err)
 	}
 
 	// get page id and page size
 	pageID, err := strconv.Atoi(r.URL.Query().Get("pageid"))
 	if err != nil {
-		pageID = 0
+		pageID = 1
 	}
 	pageSize, err := strconv.Atoi(r.URL.Query().Get("pagesize"))
 	if err != nil {
@@ -138,30 +135,31 @@ func GetMembersWithPagination(w http.ResponseWriter, r *http.Request) {
 
 	members, err := getMembersWithPagination(int64(merchantID), pageID, pageSize)
 	if err != nil {
-		fmt.Printf("Unable to get members, merchantID=%v. %v\n", merchantID, err)
-		// TODO: return error
+		log.Printf("Unable to get members, merchantID=%v. %v\n", merchantID, err)
+		json.NewEncoder(w).Encode(response{ID: -1, Message: err.Error()})
+		return
 	}
+
+	log.Printf("Get team members: merchantID=%v, pageID=%v, pageSize=%v", merchantID, pageID, pageSize)
 
 	json.NewEncoder(w).Encode(members)
 }
 
-//------------------------- handler functions ----------------
+//-- private methods
 
-func insertMerchant(merchant *models.Merchant) int64 {
+func insertMerchant(merchant *models.Merchant) (int64, error) {
 	db := DbConnect()
 
-	sqlStatement := `INSERT INTO merchants (name, age, location) VALUES ($1, $2, $3) RETURNING merchantID` // TODO: create table again
+	sqlStatement := `INSERT INTO merchants (name, age, location) VALUES ($1, $2, $3) RETURNING merchantID`
 
-	var id int64
-	err := db.QueryRow(sqlStatement, merchant.Name, merchant.Age, merchant.Location).Scan(&id)
+	var memberID int64
+	err := db.QueryRow(sqlStatement, merchant.Name, merchant.Age, merchant.Location).Scan(&memberID)
 	if err != nil {
-		fmt.Printf("Unable to execute the query. %v", err)
-		return -1
+		log.Printf("Unable to execute the query. %v", err)
+		return -1, err
 	}
 
-	fmt.Printf("Inserted a new merchant: id=%v, name=%v, age=%v, location=%v\n", id, merchant.Name, merchant.Age, merchant.Location)
-
-	return id
+	return memberID, nil
 }
 
 func getMerchant(id int64) (*models.Merchant, error) {
@@ -173,7 +171,7 @@ func getMerchant(id int64) (*models.Merchant, error) {
 	row := db.QueryRow(sqlStatement, id)
 	err := row.Scan(&merchant.MerchantID, &merchant.Name, &merchant.Age, &merchant.Location)
 	if err != nil {
-		fmt.Printf("Unable to scan the row. %v\n", err)
+		log.Printf("Unable to scan the row. %v", err)
 		return nil, err
 	}
 
@@ -186,7 +184,7 @@ func updateMerchant(id int64, merchant *models.Merchant) error {
 	sqlStatement := `UPDATE merchants SET name=$2, age=$3, location=$4 WHERE merchantID=$1`
 	_, err := db.Exec(sqlStatement, id, merchant.Name, merchant.Age, merchant.Location)
 	if err != nil {
-		fmt.Printf("Unable to execute the query. %v\n", err)
+		log.Printf("Unable to execute the query. %v", err)
 	}
 
 	return err
@@ -198,7 +196,7 @@ func deleteMerchant(id int64) error {
 	sqlStatement := `DELETE FROM merchants WHERE merchantID=$1`
 	_, err := db.Exec(sqlStatement, id)
 	if err != nil {
-		fmt.Printf("Unable to execute the query. %v\n", err)
+		log.Printf("Unable to execute the query. %v", err)
 	}
 
 	return err
@@ -218,7 +216,7 @@ func getMembersWithPagination(merchantID int64, pageID, pageSize int) ([]models.
 	sqlStatement := `SELECT * FROM members WHERE merchantID=$1 LIMIT $2`
 	rows, err := db.Query(sqlStatement, merchantID, limit)
 	if err != nil {
-		fmt.Printf("Unable to execute the query. %v\n", err)
+		log.Printf("Unable to execute the query. %v\n", err)
 		return nil, err
 	}
 
@@ -229,7 +227,7 @@ func getMembersWithPagination(merchantID int64, pageID, pageSize int) ([]models.
 			var mem models.Member
 			err = rows.Scan(&mem.MemberID, &mem.Name, &mem.Email, &mem.MerchantID)
 			if err != nil {
-				fmt.Printf("Unable to scan the row. %v\n", err)
+				log.Printf("Unable to scan the row. %v\n", err)
 			}
 			members = append(members, mem)
 		}
