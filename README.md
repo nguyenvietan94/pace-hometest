@@ -52,6 +52,7 @@ The statements above clearly define CRUD methods for merchant accounts and their
 curl -X GET "http://localhost:8080/api/merchant/1/allmembers?pageid=1&pagesize=10"
 ```
 ### Data models <a name="datamodels"></a>
+There are two options when choosing types of the database: SQL and No-SQL. No-SQL databases are more suitable for unstructured data and not required joining tasks. However, in this project, it is more convenient to define the two subjects (```merchants``` and ```members```) as structured data (eg. in relations with pre-defined fields). Moreover, joining relations is required when getting the team member list of a merchant. Therefore, I decided to employ a SQL database (i.e. PostgreSQL) for this task.<br/>
 Two tables including ```merchants``` and ```members``` are created as follows:
 ```
 merchants (
@@ -72,7 +73,7 @@ members (
 
 CREATE INDEX email_idx ON members(email);
 ```
-The cascade policy is defined as a foreign-key constrain between the two tables. Any update/delete on one table will affect the other. Furthermore, since it is required to check if an email exists when creating/updating members, an index on email should be created to speed up the lookup.
+The cascade policy is defined as a foreign-key constrain between the two tables. Any update/delete on one table will affect the other. This aims to preserve the consistency between the two tables. Furthermore, since it is required to check if an email exists when creating/updating members, an index on email should be created to speed up the lookup.
 
 ## Installation <a name="installation"></a>
 
